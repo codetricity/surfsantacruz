@@ -48,7 +48,7 @@ def get_graph(tide_data):
 
     for t in range(1, 25):
         height = tide_data[t]["tide"]
-        height_pixel = int(600 - height * 100)
+        height_pixel = int(550 - height * 50)
         y = height_pixel
         point_list.append((x,y))
         x_axis_grid.append(x)
@@ -75,18 +75,17 @@ clock = pygame.time.Clock()
 WHITE = (255, 255, 255)
 BLUE = (100, 100, 220)
 RED = (200, 100, 100)
-SCREEN = pygame.display.set_mode((800, 600))
-GUI_SCREEN = sgc.surface.Screen((800, 600))
+YELLOW = (241, 248, 27)
+
+SCREENSIZE = (800, 600)
+SCREEN = pygame.display.set_mode(SCREENSIZE)
+GUI_SCREEN = sgc.surface.Screen(SCREENSIZE)
 main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
 big_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 50)
 
 fonts = {"widget": "fnt/Ubuntu-M.ttf", "title": "fnt/Ubuntu-M.ttf",
          "mono": "fnt/Ubuntu-M.ttf"}
 sgc.Font.set_fonts(fonts)
-
-days_forecast = 0
-tide_data = get_tide()
-point_list, x_axis_grid, hour_list, title_surface_1 = get_graph(tide_data)
 
 # adds buttons using the sgc gui toolkit
 change_day_btn = DayButton(pos=(650,3), label = "Day +1",
@@ -97,6 +96,11 @@ reset_day_btn = DayButton(pos = (650, 50), label = "Today",
 
 change_day_btn.add(0)
 reset_day_btn.add(1)
+
+days_forecast = 0
+tide_data = get_tide()
+point_list, x_axis_grid, hour_list, title_surface_1 = get_graph(tide_data)
+
 
 while True:
 
@@ -137,18 +141,22 @@ while True:
 
         hour_surface = main_font.render(hour_list[counter], True, WHITE)
         if display_time:
-            pygame.draw.line(SCREEN, BLUE, (x, 50), (x, 550))
+            pygame.draw.line(SCREEN, BLUE, (x, 250), (x, 550))
             SCREEN.blit(hour_surface, (x -15, 570))
             display_time = False
         else:
             display_time = True
         counter +=1
 
-    for y in range (100, 600, 100):
-        height_text = str((600-y)/100)
+    for y in range (50, 400, 50):
+        y_axis_color = RED
+        height = ((600-(y*2))/100) + 1
+        if height == 3:
+            y_axis_color = YELLOW
+        height_text = str(height)
         height_surface = main_font.render(height_text + " ft", True, WHITE)
-        SCREEN.blit(height_surface, (750, y))
-        pygame.draw.line(SCREEN, RED, (50, y), (700, y))
+        SCREEN.blit(height_surface, (750, y+200))
+        pygame.draw.line(SCREEN, y_axis_color, (10, y+200), (700, y+200))
     SCREEN.blit(title_surface_1, (10, 10))
     pygame.draw.lines(SCREEN, WHITE, False, point_list, 3)
     sgc.update(time)
