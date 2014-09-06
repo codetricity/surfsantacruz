@@ -9,6 +9,15 @@ import datetime
 # uses simple game code for GUI widgets
 # https://launchpad.net/simplegc
 
+# pulls data from spitcast
+# http://api.spitcast.com/api/docs/
+# forecast by spot_id
+# Capitola = 149
+# The Hook = 147
+# Pleasure Point = 1
+# Cowells = 3
+# Steamer Lane = 2
+
 try:
     import android
 except ImportError:
@@ -33,6 +42,36 @@ def get_tide(daydelta=0):
     tide_json = tide_object.read()
     tide_d = json.loads(tide_json)
     return tide_d
+
+
+def get_surf(spot_id, daydelta = 0):
+    date_data = datetime.datetime.now()
+    date_data = date_data + datetime.timedelta(days=daydelta)
+    month = str(date_data.month)
+    if len(month) < 2:
+        month = str(0) + month
+    day = str(date_data.day)
+    if len(day) < 2:
+        day = str(0) + day
+
+    date_string = str(date_data.year) + month + day
+    print(date_string)
+    url_string = 'http://api.spitcast.com/api/spot/forecast/149/' + "?dval={}".format(date_string)
+    #url_string = 'http://api.spitcast.com/api/spot/forecast/149/'
+    surf_object = urllib2.urlopen(url_string)
+    surf_json = surf_object.read()
+    surf_d = json.loads(surf_json)
+    return surf_d
+
+def get_capitola(daydelta= 0):
+
+    capitola_data = get_surf(149, daydelta)
+    capitola_noon = capitola_data[12]
+   # print (capitola_noon)
+    capitola_basic = "Capitola: {} ft, {}".format(capitola_noon["size"], capitola_noon["shape_full"])
+    print (capitola_basic)
+    return capitola_basic
+
 
 
 def get_graph(tide_data):
@@ -94,8 +133,16 @@ change_day_btn = DayButton(pos=(650,3), label = "Day +1",
 reset_day_btn = DayButton(pos = (650, 50), label = "Today",
                           label_font = main_font, label_col = WHITE )
 
+
+capitola_basic = get_capitola()
+capitola = sgc.Label(pos = (10, 50),
+                         text = capitola_basic,
+                         font = main_font,
+                         label_col = WHITE)
+
 change_day_btn.add(0)
 reset_day_btn.add(1)
+capitola.add()
 
 days_forecast = 0
 tide_data = get_tide()
@@ -122,6 +169,7 @@ while True:
     if change_day_btn.clicked:
         days_forecast += 1
         tide_data = get_tide(days_forecast)
+        capitola.text = get_capitola(days_forecast)
         point_list, x_axis_grid, hour_list, title_surface_1 = \
             get_graph(tide_data)
         SCREEN.fill((0,0,0))
@@ -129,6 +177,7 @@ while True:
 
     if reset_day_btn.clicked:
         days_forecast = 0
+        capitola.text = get_capitola(days_forecast)
         tide_data = get_tide(days_forecast)
         point_list, x_axis_grid, hour_list, title_surface_1 = \
             get_graph(tide_data)
