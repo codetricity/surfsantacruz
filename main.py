@@ -1,12 +1,18 @@
+import sgc
+from sgc.locals import *
 import pygame
 import sys
 import urllib2
 import json
 import datetime
-import sgc
-from sgc.locals import *
+
 # uses simple game code for GUI widgets
 # https://launchpad.net/simplegc
+
+try:
+    import android
+except ImportError:
+    android = None
 
 def get_tide(daydelta=0):
     date_data = datetime.datetime.now()
@@ -59,6 +65,11 @@ class DayButton(sgc.Button):
 
 
 pygame.init()
+
+if android:
+    android.init()
+    android.map_key(android.KEYCODE_BACK, pygame.K_ESCAPE)
+
 clock = pygame.time.Clock()
 
 WHITE = (255, 255, 255)
@@ -68,6 +79,7 @@ SCREEN = pygame.display.set_mode((800, 600))
 GUI_SCREEN = sgc.surface.Screen((800, 600))
 main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
 big_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 50)
+
 fonts = {"widget": "fnt/Ubuntu-M.ttf", "title": "fnt/Ubuntu-M.ttf",
          "mono": "fnt/Ubuntu-M.ttf"}
 sgc.Font.set_fonts(fonts)
@@ -76,6 +88,7 @@ days_forecast = 0
 tide_data = get_tide()
 point_list, x_axis_grid, hour_list, title_surface_1 = get_graph(tide_data)
 
+# adds buttons using the sgc gui toolkit
 change_day_btn = DayButton(pos=(650,3), label = "Day +1",
                             label_font = main_font, label_col = WHITE)
 
@@ -86,10 +99,18 @@ change_day_btn.add(0)
 reset_day_btn.add(1)
 
 while True:
+
+    if android:
+        if android.check_pause():
+            android.wait_for_resume()
     time = clock.tick(30)
+
     for event in pygame.event.get():
         sgc.event(event)
         if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             pygame.quit()
             sys.exit()
 
