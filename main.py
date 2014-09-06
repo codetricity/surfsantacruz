@@ -56,7 +56,7 @@ def get_surf(spot_id, daydelta = 0):
 
     date_string = str(date_data.year) + month + day
     print(date_string)
-    url_string = 'http://api.spitcast.com/api/spot/forecast/149/' + "?dval={}".format(date_string)
+    url_string = 'http://api.spitcast.com/api/spot/forecast/{}/'.format(spot_id) + "?dval={}".format(date_string)
     #url_string = 'http://api.spitcast.com/api/spot/forecast/149/'
     surf_object = urllib2.urlopen(url_string)
     surf_json = surf_object.read()
@@ -64,13 +64,28 @@ def get_surf(spot_id, daydelta = 0):
     return surf_d
 
 def get_capitola(daydelta= 0):
-
     capitola_data = get_surf(149, daydelta)
     capitola_noon = capitola_data[12]
    # print (capitola_noon)
     capitola_basic = "Capitola: {} ft, {}".format(capitola_noon["size"], capitola_noon["shape_full"])
     print (capitola_basic)
     return capitola_basic
+
+def get_spot(spot_name, daydelta= 0):
+
+    spots = {"capitola":"149", "the_hook": "147",
+             "pleasure_point":"1",
+             "cowells": "3", "steamer_lane": "2"}
+    spot_id = spots[spot_name]
+    print(spot_name, spot_id)
+   # spot_data= get_surf(spot_id, daydelta)
+    spot_data= get_surf(spot_id, daydelta)
+    spot_noon = spot_data[12]
+    break_name = spot_noon["spot_name"]
+   # print (capitola_noon)
+    spot_basic = "{}: {} ft, {}".format(break_name, spot_noon["size"], spot_noon["shape_full"])
+    print (spot_basic)
+    return spot_basic
 
 
 
@@ -126,6 +141,9 @@ fonts = {"widget": "fnt/Ubuntu-M.ttf", "title": "fnt/Ubuntu-M.ttf",
          "mono": "fnt/Ubuntu-M.ttf"}
 sgc.Font.set_fonts(fonts)
 
+#spots = {"capitola":149, "the_hook": 147, "pleasure_point": 1,
+#         "cowells": 3, "steamer_lane": 2}
+
 # adds buttons using the sgc gui toolkit
 change_day_btn = DayButton(pos=(650,3), label = "Day +1",
                             label_font = main_font, label_col = WHITE)
@@ -134,15 +152,30 @@ reset_day_btn = DayButton(pos = (650, 50), label = "Today",
                           label_font = main_font, label_col = WHITE )
 
 
-capitola_basic = get_capitola()
+capitola_basic = get_spot("capitola")
 capitola = sgc.Label(pos = (10, 50),
                          text = capitola_basic,
                          font = main_font,
                          label_col = WHITE)
 
+pleasure_point_basic = get_spot("pleasure_point")
+pleasure_point = sgc.Label(pos = (10, 80),
+                           text = pleasure_point_basic,
+                           font = main_font,
+                           label_col = WHITE)
+
+the_hook = sgc.Label(pos = (10, 110),
+                           text = get_spot("the_hook"),
+                           font = main_font,
+                           label_col = WHITE)
+
+
 change_day_btn.add(0)
 reset_day_btn.add(1)
-capitola.add()
+capitola.add(1)
+the_hook.add(3)
+pleasure_point.add(4)
+
 
 days_forecast = 0
 tide_data = get_tide()
@@ -169,7 +202,9 @@ while True:
     if change_day_btn.clicked:
         days_forecast += 1
         tide_data = get_tide(days_forecast)
-        capitola.text = get_capitola(days_forecast)
+        capitola.text = get_spot("capitola", days_forecast)
+        the_hook.text = get_spot("the_hook", days_forecast)
+        pleasure_point.text = get_spot("pleasure_point", days_forecast)
         point_list, x_axis_grid, hour_list, title_surface_1 = \
             get_graph(tide_data)
         SCREEN.fill((0,0,0))
@@ -177,7 +212,10 @@ while True:
 
     if reset_day_btn.clicked:
         days_forecast = 0
-        capitola.text = get_capitola(days_forecast)
+        capitola.text = get_spot("capitola", days_forecast)
+        the_hook.text = get_spot("the_hook", days_forecast)
+        pleasure_point.text = get_spot("pleasure_point", days_forecast)
+
         tide_data = get_tide(days_forecast)
         point_list, x_axis_grid, hour_list, title_surface_1 = \
             get_graph(tide_data)
