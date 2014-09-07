@@ -135,6 +135,7 @@ SCREENSIZE = (800, 600)
 SCREEN = pygame.display.set_mode(SCREENSIZE)
 GUI_SCREEN = sgc.surface.Screen(SCREENSIZE)
 main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
+med_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 32)
 big_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 50)
 
 fonts = {"widget": "fnt/Ubuntu-M.ttf", "title": "fnt/Ubuntu-M.ttf",
@@ -146,10 +147,10 @@ sgc.Font.set_fonts(fonts)
 
 # adds buttons using the sgc gui toolkit
 change_day_btn = DayButton(pos=(650,3), label = "Day +1",
-                            label_font = main_font, label_col = WHITE)
+                            label_font = med_font, label_col = WHITE)
 
-reset_day_btn = DayButton(pos = (650, 50), label = "Today",
-                          label_font = main_font, label_col = WHITE )
+reset_day_btn = DayButton(pos = (650, 80), label = "Today",
+                          label_font = med_font, label_col = WHITE )
 
 
 capitola_basic = get_spot("capitola")
