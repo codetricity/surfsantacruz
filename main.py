@@ -23,7 +23,7 @@ try:
 except ImportError:
     android = None
 
-def get_tide(daydelta=0):
+def get_date(daydelta=0):
     date_data = datetime.datetime.now()
     date_data = date_data + datetime.timedelta(days=daydelta)
     month = str(date_data.month)
@@ -32,10 +32,11 @@ def get_tide(daydelta=0):
     day = str(date_data.day)
     if len(day) < 2:
         day = str(0) + day
-
-
-
     date_string = str(date_data.year) + month + day
+    return date_string
+
+def get_tide(daydelta=0):
+    date_string = get_date(daydelta)
  #   print(date_string)
     url_string = 'http://api.spitcast.com/api/county/tide/santa-cruz/' + "?dval={}".format(date_string)
     tide_object = urllib2.urlopen(url_string)
@@ -63,13 +64,6 @@ def get_surf(spot_id, daydelta = 0):
     surf_d = json.loads(surf_json)
     return surf_d
 
-def get_capitola(daydelta= 0):
-    capitola_data = get_surf(149, daydelta)
-    capitola_noon = capitola_data[12]
-   # print (capitola_noon)
-    capitola_basic = "Capitola: {} ft, {}".format(capitola_noon["size"], capitola_noon["shape_full"])
-    print (capitola_basic)
-    return capitola_basic
 
 def get_spot(spot_name, daydelta= 0):
 
