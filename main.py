@@ -46,19 +46,8 @@ def get_tide(daydelta=0):
 
 
 def get_surf(spot_id, daydelta = 0):
-    date_data = datetime.datetime.now()
-    date_data = date_data + datetime.timedelta(days=daydelta)
-    month = str(date_data.month)
-    if len(month) < 2:
-        month = str(0) + month
-    day = str(date_data.day)
-    if len(day) < 2:
-        day = str(0) + day
-
-    date_string = str(date_data.year) + month + day
-    print(date_string)
+    date_string = get_date(daydelta)
     url_string = 'http://api.spitcast.com/api/spot/forecast/{}/'.format(spot_id) + "?dval={}".format(date_string)
-    #url_string = 'http://api.spitcast.com/api/spot/forecast/149/'
     surf_object = urllib2.urlopen(url_string)
     surf_json = surf_object.read()
     surf_d = json.loads(surf_json)
