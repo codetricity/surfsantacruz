@@ -24,6 +24,11 @@ except ImportError:
     android = None
 
 def get_date(daydelta=0):
+    """
+    Input number of days in the future for tide and surf forecast.
+    Output the date as a string in this format YYYYMMDD.
+    This is the spitcast format for tide and surf predictions.
+    """
     date_data = datetime.datetime.now()
     date_data = date_data + datetime.timedelta(days=daydelta)
     month = str(date_data.month)
@@ -231,7 +236,7 @@ def main():
             height_surface = main_font.render(height_text + " ft", True, WHITE)
             SCREEN.blit(height_surface, (750, y+200))
             pygame.draw.line(SCREEN, y_axis_color, (10, y+200), (700, y+200))
-    
+
 
         SCREEN.blit(title_surface_1, (10, 10))
         pygame.draw.lines(SCREEN, WHITE, False, point_list, 3)
