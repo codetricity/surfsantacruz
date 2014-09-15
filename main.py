@@ -1,22 +1,23 @@
 import sgc
-from sgc.locals import *
+# from sgc.locals import *
 import pygame
 import sys
 import urllib2
 import json
 import datetime
+"""
+uses simple game code for GUI widgets
+https://launchpad.net/simplegc
 
-# uses simple game code for GUI widgets
-# https://launchpad.net/simplegc
-
-# pulls data from spitcast
-# http://api.spitcast.com/api/docs/
-# forecast by spot_id
-# Capitola = 149
-# The Hook = 147
-# Pleasure Point = 1
-# Cowells = 3
-# Steamer Lane = 2
+pulls data from spitcast
+http://api.spitcast.com/api/docs/
+forecast by spot_id
+Capitola = 149
+The Hook = 147
+Pleasure Point = 1
+Steamer Lane = 2
+Cowells = 3
+"""
 
 try:
     import android
@@ -41,12 +42,16 @@ def get_date(daydelta=0):
     return date_string
 
 def get_tide(daydelta=0):
+    """
+    accept number of days in future from current date.
+    returns tide data as a list of dictionaries.  
+    each value of the list is an hour of tide forecast data.
+    """
     date_string = get_date(daydelta)
- #   print(date_string)
     url_string = 'http://api.spitcast.com/api/county/tide/santa-cruz/' + "?dval={}".format(date_string)
     tide_object = urllib2.urlopen(url_string)
-    tide_json = tide_object.read()
-    tide_d = json.loads(tide_json)
+    tide_json = tide_object.read() # read in JSON data
+    tide_d = json.loads(tide_json) # convert data into list of dictionaries
     return tide_d
 
 
@@ -60,25 +65,24 @@ def get_surf(spot_id, daydelta = 0):
 
 
 def get_spot(spot_name, daydelta= 0):
-
+    """
+    accept name of surf spot in human-readable format.
+    for forecast, will accept number of days in the future
+    return string that contains the name of the spot
+    """
     spots = {"capitola":"149", "the_hook": "147",
              "pleasure_point":"1",
              "cowells": "3", "steamer_lane": "2"}
     spot_id = spots[spot_name]
-    print(spot_name, spot_id)
-   # spot_data= get_surf(spot_id, daydelta)
     spot_data= get_surf(spot_id, daydelta)
     spot_noon = spot_data[12]
     break_name = spot_noon["spot_name"]
-   # print (capitola_noon)
     spot_basic = "{}: {} ft, {}".format(break_name, spot_noon["size"], spot_noon["shape_full"])
-    print (spot_basic)
     return spot_basic
 
 
 
 def get_graph(tide_data):
-    WHITE = (255, 255, 255)
     LIGHTBLUE = (174, 236, 255)
     big_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 50)
     point_list = []
@@ -101,11 +105,31 @@ def get_graph(tide_data):
         hour_list.append(tide_data[t]["hour"])
     return point_list, x_axis_grid, hour_list, title_surface_1
 
+
+def forecast_surf(surfspots, days_forecast):
+    WHITE = (0, 0, 0)
+    main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
+    y = 50
+
+    label_list =[]
+    for surfspot in surfspots:
+        spot_text = get_spot(surfspot, days_forecast)
+        spot_label = sgc.Label(pos = (10, y),
+                               text = spot_text,
+                               font = main_font,
+                               Label_col = WHITE)
+        y += 30
+        label_list.append(spot_label)
+    return label_list
+
+
+
 class DayButton(sgc.Button):
     clicked = False
 
     def on_click(self):
         self.clicked = True
+
 
 
 pygame.init()
@@ -114,7 +138,9 @@ if android:
     android.init()
     android.map_key(android.KEYCODE_BACK, pygame.K_ESCAPE)
 
+
 def main():
+
     clock = pygame.time.Clock()
 
     WHITE = (255, 255, 255)
@@ -124,17 +150,17 @@ def main():
 
     SCREENSIZE = (800, 600)
     SCREEN = pygame.display.set_mode(SCREENSIZE)
-    GUI_SCREEN = sgc.surface.Screen(SCREENSIZE)
+    sgc.surface.Screen(SCREENSIZE) # needed for SGC GUI toolkit
     main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
     med_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 32)
-    big_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 50)
+
 
     fonts = {"widget": "fnt/Ubuntu-M.ttf", "title": "fnt/Ubuntu-M.ttf",
              "mono": "fnt/Ubuntu-M.ttf"}
     sgc.Font.set_fonts(fonts)
 
-    #spots = {"capitola":149, "the_hook": 147, "pleasure_point": 1,
-    #         "cowells": 3, "steamer_lane": 2}
+    SURFSPOTS=("capitola", "pleasure_point", "the_hook")
+
 
     # adds buttons using the sgc gui toolkit
     change_day_btn = DayButton(pos=(650,3), label = "Day +1",
@@ -143,39 +169,16 @@ def main():
     reset_day_btn = DayButton(pos = (650, 80), label = "Today",
                               label_font = med_font, label_col = WHITE )
 
-
-    capitola_basic = get_spot("capitola")
-    capitola = sgc.Label(pos = (10, 50),
-                             text = capitola_basic,
-                             font = main_font,
-                             label_col = WHITE)
-
-    pleasure_point_basic = get_spot("pleasure_point")
-    pleasure_point = sgc.Label(pos = (10, 80),
-                               text = pleasure_point_basic,
-                               font = main_font,
-                               label_col = WHITE)
-
-    the_hook = sgc.Label(pos = (10, 110),
-                               text = get_spot("the_hook"),
-                               font = main_font,
-                               label_col = WHITE)
-
-
+    days_forecast = 0
+    forecast_list = forecast_surf(SURFSPOTS, days_forecast)
+    for forecast in forecast_list:
+        forecast.add()
     change_day_btn.add(0)
     reset_day_btn.add(1)
-    capitola.add(1)
-    the_hook.add(3)
-    pleasure_point.add(4)
-
-
-    days_forecast = 0
     tide_data = get_tide()
     point_list, x_axis_grid, hour_list, title_surface_1 = get_graph(tide_data)
 
-
     while True:
-
         if android:
             if android.check_pause():
                 android.wait_for_resume()
@@ -190,29 +193,22 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-
-        if change_day_btn.clicked:
-            days_forecast += 1
+        if change_day_btn.clicked or reset_day_btn.clicked:
+            if change_day_btn.clicked:
+                days_forecast += 1
+                change_day_btn.clicked = False
+            if reset_day_btn.clicked:
+                days_forecast = 0
+                reset_day_btn.clicked = False
             tide_data = get_tide(days_forecast)
-            capitola.text = get_spot("capitola", days_forecast)
-            the_hook.text = get_spot("the_hook", days_forecast)
-            pleasure_point.text = get_spot("pleasure_point", days_forecast)
-            point_list, x_axis_grid, hour_list, title_surface_1 = \
-                get_graph(tide_data)
-            SCREEN.fill((0,0,0))
-            change_day_btn.clicked = False
-
-        if reset_day_btn.clicked:
-            days_forecast = 0
-            capitola.text = get_spot("capitola", days_forecast)
-            the_hook.text = get_spot("the_hook", days_forecast)
-            pleasure_point.text = get_spot("pleasure_point", days_forecast)
-
-            tide_data = get_tide(days_forecast)
-            point_list, x_axis_grid, hour_list, title_surface_1 = \
-                get_graph(tide_data)
-            SCREEN.fill((0,0,0))
-            reset_day_btn.clicked = False
+            spot_index = 0
+            for forecast in forecast_list:
+                spot_text = get_spot(SURFSPOTS[spot_index], days_forecast)
+                forecast.text = spot_text
+                spot_index += 1
+            point_list, x_axis_grid, hour_list, title_surface_1 = get_graph(tide_data)
+            SCREEN.fill((0,0,0))            
+            
 
         counter = 0
         display_time = True
