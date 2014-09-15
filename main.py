@@ -56,6 +56,13 @@ def get_tide(daydelta=0):
 
 
 def get_surf(spot_id, daydelta = 0):
+    """
+    Accepts spot_id as an integer value of the specific surfspot
+    Accepts days in future to forecast
+    Opens connection to spitcast API
+    Returns list of dictionary values for the forecast of the specific
+    spot.
+    """
     date_string = get_date(daydelta)
     url_string = 'http://api.spitcast.com/api/spot/forecast/{}/'.format(spot_id) + "?dval={}".format(date_string)
     surf_object = urllib2.urlopen(url_string)
@@ -122,6 +129,76 @@ def forecast_surf(surfspots, days_forecast):
         label_list.append(spot_label)
     return label_list
 
+def draw_tide_graph(screensize, x_axis_grid, hour_list, 
+                    title_surface_1, 
+                    point_list):
+    counter = 0
+    display_time = True
+    main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
+    WHITE = (255, 255, 255)
+    BLUE = (100, 100, 220)
+    RED = (200, 100, 100)
+    YELLOW = (241, 248, 27)
+    graph_surface = pygame.Surface((screensize))
+
+
+    for x in x_axis_grid:
+
+        hour_surface = main_font.render(hour_list[counter], True, WHITE)
+        if display_time:
+            pygame.draw.line(graph_surface, BLUE, (x, 250), (x, 550))
+            graph_surface.blit(hour_surface, (x -15, 570))
+            display_time = False
+        else:
+            display_time = True
+        counter +=1
+
+    for y in range (50, 400, 50):
+        y_axis_color = RED
+        height = ((600-(y*2))/100) + 1
+        if height == 3:
+            y_axis_color = YELLOW
+        height_text = str(height)
+        height_surface = main_font.render(height_text + " ft", True, WHITE)
+        graph_surface.blit(height_surface, (750, y+200))
+        pygame.draw.line(graph_surface, y_axis_color, (10, y+200), (700, y+200))
+
+
+    graph_surface.blit(title_surface_1, (10, 10))
+    pygame.draw.lines(graph_surface, WHITE, False, point_list, 3)
+
+    return graph_surface
+
+class Forecast():
+
+    def __init__(self, surfspots):
+        self.WHITE = (0,0,0)
+        self.med_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 32)
+        # adds buttons using the sgc gui toolkit
+        self.change_day_btn = DayButton(pos=(650,3), label = "Day +1",
+                                    label_font = self.med_font, label_col = self.WHITE)
+
+        self.reset_day_btn = DayButton(pos = (650, 80), label = "Today",
+                                  label_font = self.med_font, label_col = self.WHITE )
+
+        self.days = 0
+        self.f_list = forecast_surf(surfspots, self.days)
+
+
+def update_days_forecast(change_day_btn, reset_day_btn, days_forecast, 
+                         forecast_list, surfspots):
+    if change_day_btn.clicked:
+        days_forecast += 1
+        change_day_btn.clicked = False
+    if reset_day_btn.clicked:
+        days_forecast = 0
+        reset_day_btn.clicked = False
+    spot_index = 0
+    for forecast in forecast_list:
+        spot_text = get_spot(surfspots[spot_index], days_forecast)
+        forecast.text = spot_text
+        spot_index += 1
+    return change_day_btn, reset_day_btn, days_forecast, spot_text
 
 
 class DayButton(sgc.Button):
@@ -143,16 +220,16 @@ def main():
 
     clock = pygame.time.Clock()
 
-    WHITE = (255, 255, 255)
-    BLUE = (100, 100, 220)
-    RED = (200, 100, 100)
-    YELLOW = (241, 248, 27)
+#    WHITE = (255, 255, 255)
+#    BLUE = (100, 100, 220)
+#    RED = (200, 100, 100)
+#    YELLOW = (241, 248, 27)
 
     SCREENSIZE = (800, 600)
     SCREEN = pygame.display.set_mode(SCREENSIZE)
     sgc.surface.Screen(SCREENSIZE) # needed for SGC GUI toolkit
-    main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
-    med_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 32)
+#    main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
+#    med_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 32)
 
 
     fonts = {"widget": "fnt/Ubuntu-M.ttf", "title": "fnt/Ubuntu-M.ttf",
@@ -162,19 +239,21 @@ def main():
     SURFSPOTS=("capitola", "pleasure_point", "the_hook")
 
 
+
+    forecast = Forecast(SURFSPOTS)
     # adds buttons using the sgc gui toolkit
-    change_day_btn = DayButton(pos=(650,3), label = "Day +1",
-                                label_font = med_font, label_col = WHITE)
+    # change_day_btn = DayButton(pos=(650,3), label = "Day +1",
+    #                             label_font = med_font, label_col = WHITE)
 
-    reset_day_btn = DayButton(pos = (650, 80), label = "Today",
-                              label_font = med_font, label_col = WHITE )
+    # reset_day_btn = DayButton(pos = (650, 80), label = "Today",
+    #                           label_font = med_font, label_col = WHITE )
 
-    days_forecast = 0
-    forecast_list = forecast_surf(SURFSPOTS, days_forecast)
-    for forecast in forecast_list:
-        forecast.add()
-    change_day_btn.add(0)
-    reset_day_btn.add(1)
+#    days_forecast = 0
+#    forecast_list = forecast_surf(SURFSPOTS, forecast.days)
+    for fcast in forecast.f_list:
+        fcast.add()
+    forecast.change_day_btn.add()
+    forecast.reset_day_btn.add()
     tide_data = get_tide()
     point_list, x_axis_grid, hour_list, title_surface_1 = get_graph(tide_data)
 
@@ -193,49 +272,18 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-        if change_day_btn.clicked or reset_day_btn.clicked:
-            if change_day_btn.clicked:
-                days_forecast += 1
-                change_day_btn.clicked = False
-            if reset_day_btn.clicked:
-                days_forecast = 0
-                reset_day_btn.clicked = False
-            tide_data = get_tide(days_forecast)
-            spot_index = 0
-            for forecast in forecast_list:
-                spot_text = get_spot(SURFSPOTS[spot_index], days_forecast)
-                forecast.text = spot_text
-                spot_index += 1
+        if forecast.change_day_btn.clicked or forecast.reset_day_btn.clicked:
+            forecast.change_day_btn, forecast.reset_day_btn, forecast.days, spot_text = update_days_forecast(forecast.change_day_btn, forecast.reset_day_btn, forecast.days, forecast.f_list, SURFSPOTS)
             point_list, x_axis_grid, hour_list, title_surface_1 = get_graph(tide_data)
-            SCREEN.fill((0,0,0))            
-            
 
-        counter = 0
-        display_time = True
-        for x in x_axis_grid:
+        graph_surface = draw_tide_graph(SCREENSIZE, 
+                                        x_axis_grid, 
+                                        hour_list, 
+                                        title_surface_1, 
+                                        point_list)
 
-            hour_surface = main_font.render(hour_list[counter], True, WHITE)
-            if display_time:
-                pygame.draw.line(SCREEN, BLUE, (x, 250), (x, 550))
-                SCREEN.blit(hour_surface, (x -15, 570))
-                display_time = False
-            else:
-                display_time = True
-            counter +=1
-
-        for y in range (50, 400, 50):
-            y_axis_color = RED
-            height = ((600-(y*2))/100) + 1
-            if height == 3:
-                y_axis_color = YELLOW
-            height_text = str(height)
-            height_surface = main_font.render(height_text + " ft", True, WHITE)
-            SCREEN.blit(height_surface, (750, y+200))
-            pygame.draw.line(SCREEN, y_axis_color, (10, y+200), (700, y+200))
-
-
-        SCREEN.blit(title_surface_1, (10, 10))
-        pygame.draw.lines(SCREEN, WHITE, False, point_list, 3)
+        SCREEN.fill((0,0,0))
+        SCREEN.blit(graph_surface, (0,0))
         sgc.update(time)
         pygame.display.update()
 
