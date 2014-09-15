@@ -109,24 +109,6 @@ class Graph():
             self.x = self.x +30
             self.hour_list.append(tide_data[t]["hour"])
 
-# def get_graph(tide_data):
-#     point_list = []
-#     x = 20
-#     x_axis_grid = []
-#     hour_list =[]
-#     title_text_1 = tide_data[0]["name"] + " - " + tide_data[0]["date"]
-
-#     for t in range(1, 25):
-#         height = tide_data[t]["tide"]
-#         height_pixel = int(550 - height * 50)
-#         y = height_pixel
-#         point_list.append((x,y))
-#         x_axis_grid.append(x)
-#         x = x +30
-#         hour_list.append(tide_data[t]["hour"])
-#     return point_list, x_axis_grid, hour_list, title_text_1
-
-
 def forecast_surf(surfspots, days_forecast):
     WHITE = (0, 0, 0)
     main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
@@ -143,9 +125,7 @@ def forecast_surf(surfspots, days_forecast):
         label_list.append(spot_label)
     return label_list
 
-def draw_tide_graph(screensize, x_axis_grid, hour_list, 
-                    title_text_1, 
-                    point_list):
+def draw_tide_graph(screensize, graph):
     counter = 0
     display_time = True
     main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
@@ -154,13 +134,11 @@ def draw_tide_graph(screensize, x_axis_grid, hour_list,
     RED = (200, 100, 100)
     YELLOW = (241, 248, 27)
     LIGHTBLUE = (174, 236, 255)
-    big_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 50)
+    big_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 36)
     graph_surface = pygame.Surface((screensize))
 
-
-    for x in x_axis_grid:
-
-        hour_surface = main_font.render(hour_list[counter], True, WHITE)
+    for x in graph.x_axis_grid:
+        hour_surface = main_font.render(graph.hour_list[counter], True, WHITE)
         if display_time:
             pygame.draw.line(graph_surface, BLUE, (x, 250), (x, 550))
             graph_surface.blit(hour_surface, (x -15, 570))
@@ -178,11 +156,52 @@ def draw_tide_graph(screensize, x_axis_grid, hour_list,
         height_surface = main_font.render(height_text + " ft", True, WHITE)
         graph_surface.blit(height_surface, (750, y+200))
         pygame.draw.line(graph_surface, y_axis_color, (10, y+200), (700, y+200))
-    title_surface_1 = big_font.render(title_text_1, True, LIGHTBLUE)    
+    title_surface_1 = big_font.render(graph.title, True, LIGHTBLUE)    
     graph_surface.blit(title_surface_1, (10, 10))
-    pygame.draw.lines(graph_surface, WHITE, False, point_list, 3)
-
+    pygame.draw.lines(graph_surface, WHITE, False, graph.point_list, 3)
     return graph_surface
+
+# def draw_tide_graph(screensize, x_axis_grid, hour_list, 
+#                     title_text_1, 
+#                     point_list):
+#     counter = 0
+#     display_time = True
+#     main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
+#     WHITE = (255, 255, 255)
+#     BLUE = (100, 100, 220)
+#     RED = (200, 100, 100)
+#     YELLOW = (241, 248, 27)
+#     LIGHTBLUE = (174, 236, 255)
+#     big_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 50)
+#     graph_surface = pygame.Surface((screensize))
+
+
+#     for x in x_axis_grid:
+
+#         hour_surface = main_font.render(hour_list[counter], True, WHITE)
+#         if display_time:
+#             pygame.draw.line(graph_surface, BLUE, (x, 250), (x, 550))
+#             graph_surface.blit(hour_surface, (x -15, 570))
+#             display_time = False
+#         else:
+#             display_time = True
+#         counter +=1
+
+#     for y in range (50, 400, 50):
+#         y_axis_color = RED
+#         height = ((600-(y*2))/100) + 1
+#         if height == 3:
+#             y_axis_color = YELLOW
+#         height_text = str(height)
+#         height_surface = main_font.render(height_text + " ft", True, WHITE)
+#         graph_surface.blit(height_surface, (750, y+200))
+#         pygame.draw.line(graph_surface, y_axis_color, (10, y+200), (700, y+200))
+#     title_surface_1 = big_font.render(title_text_1, True, LIGHTBLUE)    
+#     graph_surface.blit(title_surface_1, (10, 10))
+#     pygame.draw.lines(graph_surface, WHITE, False, point_list, 3)
+
+#     return graph_surface
+
 
 class Forecast():
 
@@ -197,23 +216,24 @@ class Forecast():
                                   label_font = self.med_font, label_col = self.WHITE )
 
         self.days = 0
-        self.f_list = forecast_surf(surfspots, self.days)
+        self.surfspots = surfspots
+        self.f_list = forecast_surf(self.surfspots, self.days)
 
 
-def update_days_forecast(change_day_btn, reset_day_btn, days_forecast, 
-                         forecast_list, surfspots):
-    if change_day_btn.clicked:
-        days_forecast += 1
-        change_day_btn.clicked = False
-    if reset_day_btn.clicked:
-        days_forecast = 0
-        reset_day_btn.clicked = False
+
+def update_days(forecast):
+    if forecast.change_day_btn.clicked:
+        forecast.days += 1
+        forecast.change_day_btn.clicked = False
+    if forecast.reset_day_btn.clicked:
+        forecast.days = 0
+        forecast.reset_day_btn.clicked = False
     spot_index = 0
-    for forecast in forecast_list:
-        spot_text = get_spot(surfspots[spot_index], days_forecast)
-        forecast.text = spot_text
+    for f_label in forecast.f_list:
+        spot_text = get_spot(forecast.surfspots[spot_index], forecast.days)
+        f_label.text = spot_text
         spot_index += 1
-    return change_day_btn, reset_day_btn, days_forecast, spot_text
+    return forecast
 
 
 class DayButton(sgc.Button):
@@ -223,56 +243,32 @@ class DayButton(sgc.Button):
         self.clicked = True
 
 
-
 pygame.init()
 
 if android:
     android.init()
     android.map_key(android.KEYCODE_BACK, pygame.K_ESCAPE)
 
-
 def main():
-
+    SURFSPOTS=("capitola", "pleasure_point", "the_hook")
     clock = pygame.time.Clock()
-
-#    WHITE = (255, 255, 255)
-#    BLUE = (100, 100, 220)
-#    RED = (200, 100, 100)
-#    YELLOW = (241, 248, 27)
-
     SCREENSIZE = (800, 600)
     SCREEN = pygame.display.set_mode(SCREENSIZE)
     sgc.surface.Screen(SCREENSIZE) # needed for SGC GUI toolkit
-#    main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
-#    med_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 32)
-
-
     fonts = {"widget": "fnt/Ubuntu-M.ttf", "title": "fnt/Ubuntu-M.ttf",
              "mono": "fnt/Ubuntu-M.ttf"}
     sgc.Font.set_fonts(fonts)
 
-    SURFSPOTS=("capitola", "pleasure_point", "the_hook")
-
-
 
     forecast = Forecast(SURFSPOTS)
     graph = Graph()
-    # adds buttons using the sgc gui toolkit
-    # change_day_btn = DayButton(pos=(650,3), label = "Day +1",
-    #                             label_font = med_font, label_col = WHITE)
 
-    # reset_day_btn = DayButton(pos = (650, 80), label = "Today",
-    #                           label_font = med_font, label_col = WHITE )
-
-#    days_forecast = 0
-#    forecast_list = forecast_surf(SURFSPOTS, forecast.days)
     for fcast in forecast.f_list:
         fcast.add()
     forecast.change_day_btn.add()
     forecast.reset_day_btn.add()
     tide_data = get_tide()
     graph.update(tide_data)
-#    point_list, x_axis_grid, hour_list, title_text_1 = get_graph(tide_data)
 
     while True:
         if android:
@@ -290,16 +286,16 @@ def main():
                 sys.exit()
 
         if forecast.change_day_btn.clicked or forecast.reset_day_btn.clicked:
-
-            forecast.change_day_btn, forecast.reset_day_btn, forecast.days, spot_text = update_days_forecast(forecast.change_day_btn, forecast.reset_day_btn, forecast.days, forecast.f_list, SURFSPOTS)
+            forecast = update_days(forecast)
             tide_data = get_tide(forecast.days)
             graph.update(tide_data)
 
-        graph_surface = draw_tide_graph(SCREENSIZE, 
-                                        graph.x_axis_grid, 
-                                        graph.hour_list, 
-                                        graph.title, 
-                                        graph.point_list)
+        graph_surface = draw_tide_graph(SCREENSIZE, graph)
+        # graph_surface = draw_tide_graph(SCREENSIZE, 
+        #                                 graph.x_axis_grid, 
+        #                                 graph.hour_list, 
+        #                                 graph.title, 
+        #                                 graph.point_list)
 
         SCREEN.fill((0,0,0))
         SCREEN.blit(graph_surface, (0,0))
