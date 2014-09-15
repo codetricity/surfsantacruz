@@ -1,23 +1,30 @@
+"""
+Educational program developed with pygame, pgs4a.  Shows tide
+and surf forecasts for Santa Cruz.   Runs on 
+the desktop and on Android phones.  To install the program
+Uses [simple game code][1] for GUI widgets
+
+
+pulls data from [spitcast][2]
+
+forecast by spot_id
+- Capitola = 149
+- The Hook = 147
+- Pleasure Point = 1
+- Steamer Lane = 2
+- Cowells = 3
+
+[1]: https://launchpad.net/simplegc
+[2]: http://api.spitcast.com/api/docs/
+"""
+
+
 import sgc
-# from sgc.locals import *
 import pygame
 import sys
 import urllib2
 import json
 import datetime
-"""
-uses simple game code for GUI widgets
-https://launchpad.net/simplegc
-
-pulls data from spitcast
-http://api.spitcast.com/api/docs/
-forecast by spot_id
-Capitola = 149
-The Hook = 147
-Pleasure Point = 1
-Steamer Lane = 2
-Cowells = 3
-"""
 
 try:
     import android
