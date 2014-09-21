@@ -2,20 +2,25 @@
 Educational program developed with pygame, pgs4a.  Shows tide
 and surf forecasts for Santa Cruz.   Runs on 
 the desktop and on Android phones.  To install the program
-Uses [simple game code][1] for GUI widgets
+Uses `simple game code`_ for GUI widgets
 
 
-pulls data from [spitcast][2]
+pulls data from `spitcast`_
 
 forecast by spot_id
+
 - Capitola = 149
+
 - The Hook = 147
+
 - Pleasure Point = 1
+
 - Steamer Lane = 2
+
 - Cowells = 3
 
-[1]: https://launchpad.net/simplegc
-[2]: http://api.spitcast.com/api/docs/
+.. _simple game code: https://launchpad.net/simplegc
+.. _spitcast: http://api.spitcast.com/api/docs/
 """
 
 
@@ -30,6 +35,9 @@ try:
     import android
 except ImportError:
     android = None
+
+if not android:
+    import pprint
 
 def get_date(daydelta=0):
     """
@@ -197,6 +205,58 @@ def update_days(forecast):
         spot_index += 1
     return forecast
 
+class Weather():
+    def __init__(self):
+        weather_obj = urllib2.urlopen("http://api.openweathermap.org/data/2.5/weather?q=santa%20cruz,%20us&units=imperial")
+        weather_json = weather_obj.read()
+        self.w_dict = json.loads(weather_json)
+        sunrise_datestamp = self.w_dict["sys"]["sunrise"]
+        sunrise = datetime.datetime.fromtimestamp(int(sunrise_datestamp))
+        self.sunrise = sunrise.strftime('%H:%M')
+        sunset_stamp = self.w_dict["sys"]["sunset"]
+        sunset = datetime.datetime.fromtimestamp(int(sunset_stamp))
+        self.sunset = sunset.strftime('%H:%M')
+        self.temp_min = str(int(self.w_dict["main"]["temp_min"]))
+        self.temp_max = str(int(self.w_dict["main"]["temp_max"]))
+        self.description = self.w_dict["weather"][0]["description"]
+        self.windspeed = self.w_dict["wind"]["speed"]
+        self.show()
+
+
+    def show(self):
+        WHITE = (0, 0, 0)
+        main_font = pygame.font.Font("fnt/Ubuntu-M.ttf", 20)
+        weather_text = "Sunrise: {}\nSunset: {}".format(self.sunrise, self.sunset)
+        self.weather_label = sgc.Label(pos = (10, 140),
+                               text = weather_text,
+                               font = main_font,
+                               Label_col = WHITE)
+        self.weather_label.add()
+        temp_text = "Coldest Air Temp: {}F\n".format(self.temp_min) +\
+            "Warmest Air Temp: {}F".format(self.temp_max)
+
+
+        self.temp_label = sgc.Label(pos=(190, 140),
+                                    text= temp_text,
+                                    font = main_font,
+                                    Label_col = WHITE)
+        self.temp_label.add()
+
+        desc_text = self.description + "\nWind: {}".format(str(self.windspeed))
+        self.desc_label = sgc.Label(pos=(450, 140),
+                                    text = desc_text,
+                                    font = main_font,
+                                    Label_col = WHITE)
+        self.desc_label.add()
+
+    def forecast(self):
+        url = "http://api.openweathermap.org/data/2.5/forecast/daily?q=santa%20cruz,%20ca&mode=json&units=imperial&cnt=7"
+        try:
+            weath_cast_obj = urllib2.urlopen((url))
+        except URLError, e:
+            print e.reason
+        weath_cast_json = weath_cast_obj.read()
+        self.weath_cast = json.loads(weath_cast_json)
 
 class DayButton(sgc.Button):
     clicked = False
@@ -228,6 +288,12 @@ def main():
     forecast.reset_day_btn.add()
     tide_data = get_tide()
     graph.update(tide_data)
+
+    # get weather from Open Weather Map
+    weather = Weather()
+    weather.forecast()
+   # pprint.pprint(weather.weath_cast)
+    pprint.pprint(weather.w_dict)
 
     while True:
         if android:
